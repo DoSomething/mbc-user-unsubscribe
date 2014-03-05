@@ -58,7 +58,39 @@ $callback = function($message) {
       $lastName = $unserializedData['data']['merges']['LNAME'];
       $bday = $unserializedData['data']['merges']['BDAYFULL'];
 
-      // @todo Update the DS user database with the subscription settings
+      // @todo use mysqli or PDO or maybe even MeekroDB
+      // @todo this is specific to local MAMP setup right now
+      $link = mysql_connect(
+        ':/Applications/MAMP/tmp/mysql/mysql.sock',
+        'root',
+        'root'
+      );
+
+      // Connect to database 'mailchimp_users'
+      // @todo update to final database and table name when moved to production
+      $userDb = mysql_select_db('mailchimp_users', $link);
+
+      // Update the 'users' database to indicate user is unsubscribed
+      $query = "UPDATE users SET subscribed = 0";
+
+      if (!empty($uid)) {
+        $query .= ", drupal_uid = $uid";
+      }
+      if (!empty($firstName)) {
+        $query .= ", first = '$firstName'";
+      }
+      if (!empty($lastName)) {
+        $query .= ", last = '$lastName'";
+      }
+      if (!empty($bday)) {
+        $query .= ", bday = '$bday'";
+      }
+
+      // Select row by email
+      $query .= " WHERE email = '$email'";
+
+      $result = mysql_query($query);
+
     }
   }
 };
