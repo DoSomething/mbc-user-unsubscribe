@@ -19,36 +19,40 @@ $connection = new AMQPConnection(
 );
 
 // Name the direct exchange the channel will connect to
-$exchangeName = 'ds.direct_mailchimp_webhooks';
+$exchangeName = 'direct_mailchimp_webhooks';
 
-// Set the routing key that
+// Set the binding key
 $bindingKey = 'mailchimp-unsubscribe';
 
+// Channel
 $channel = $connection->channel();
-$channel->exchange_declare(
-  $exchangeName,
-  'direct',
+
+// Setup the queue
+$queueName = 'mailchimp-unsubscribe-queue';
+$channel->queue_declare(
+  $queueName,
   false,
+  true,
   false,
   false
 );
 
-// Get random queue name genereated by RabbitMQ
-list($queueName, ,) = $channel->queue_declare(
-    '',     // Empty queue name creates queue with generated name
-    false,  // passive
-    false,  // durable
-    true,   // exclusive
-    false   // auto_delete
-  );
+// Setup the exchange
+$channel->exchange_declare(
+  $exchangeName,  // exchange name
+  'direct',       // exchange type
+  false,          // passive
+  true,           // durable
+  false           // auto_delete
+);
 
 // Bind the queue to the exchange
 $channel->queue_bind($queueName, $exchangeName, $bindingKey);
 
 // Create callback to handle messages received by this consumer
-$callback = function($message) {
-  if (isset($message->body)) {
-    $unserializedData = unserialize($message->body);
+$callback = function($payload) {
+  if (isset($payload->body)) {
+    $unserializedData = unserialize($payload->body);
 
     if (isset($unserializedData['data']) && isset($unserializedData['data']['merges'])) {
       // Extract user info from the message data
@@ -86,6 +90,9 @@ $callback = function($message) {
       if ($result == TRUE) {
         echo "Updated subscription for email: $email\n";
       }
+
+      // Send acknowledgement
+      $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
     }
   }
 };
@@ -95,7 +102,7 @@ $channel->basic_consume(
   $queueName, // Queue name
   '',         // Consumer tag
   false,      // no_local
-  true,       // no_ack
+  false,      // no_ack
   false,      // exclusive
   false,      // nowait
   $callback   // callback
