@@ -24,7 +24,20 @@ $exchangeName = 'direct_mailchimp_webhooks';
 // Set the binding key
 $bindingKey = 'mailchimp-unsubscribe';
 
+// Channel
 $channel = $connection->channel();
+
+// Setup the queue
+$queueName = 'mailchimp-unsubscribe-queue';
+$channel->queue_declare(
+  $queueName,
+  false,
+  true,
+  false,
+  false
+);
+
+// Setup the exchange
 $channel->exchange_declare(
   $exchangeName,  // exchange name
   'direct',       // exchange type
@@ -32,15 +45,6 @@ $channel->exchange_declare(
   true,           // durable
   false           // auto_delete
 );
-
-// Get random queue name genereated by RabbitMQ
-list($queueName, ,) = $channel->queue_declare(
-    '',     // Empty queue name creates queue with generated name
-    false,  // passive
-    false,  // durable
-    true,   // exclusive
-    false   // auto_delete
-  );
 
 // Bind the queue to the exchange
 $channel->queue_bind($queueName, $exchangeName, $bindingKey);
@@ -89,7 +93,6 @@ $callback = function($payload) {
 
       // Send acknowledgement
       $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
-
     }
   }
 };
