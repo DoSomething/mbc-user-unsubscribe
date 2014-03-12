@@ -7,47 +7,42 @@ use PhpAmqpLib\Connection\AMQPConnection;
 $credentials = array();
 $credentials['host'] = getenv('RABBITMQ_HOST') ? getenv('RABBITMQ_HOST') : 'localhost';
 $credentials['port'] = getenv('RABBITMQ_PORT') ? getenv('RABBITMQ_PORT') : '5672';
-$credentials['user'] = getenv('RABBITMQ_USERNAME') ? getenv('RABBITMQ_USERNAME') : 'guest';
+$credentials['username'] = getenv('RABBITMQ_USERNAME') ? getenv('RABBITMQ_USERNAME') : 'guest';
 $credentials['password'] = getenv('RABBITMQ_PASSWORD') ? getenv('RABBITMQ_PASSWORD') : 'guest';
 
-// Create connection
-$connection = new AMQPConnection(
-  $credentials['host'],
-  $credentials['port'],
-  $credentials['user'],
-  $credentials['password']
+$config = array(
+  // Routing key
+  'routingKey' => 'mailchimp-unsubscribe',
+
+  // Consume options
+  'consume' => array(
+    'consumer_tag' => '',
+    'no_local' => FALSE,
+    'no_ack' => FALSE,
+    'exclusive' => FALSE,
+    'nowait' => FALSE,
+  ),
+
+  // Exchange options
+  'exchange' => array(
+    'name' => 'direct-mailchimp-webhooks',
+    'type' => 'direct',
+    'passive' => FALSE,
+    'durable' => TRUE,
+    'auto_delete' => FALSE,
+  ),
+
+  // Queue options
+  'queue' => array(
+    'name' => 'mailchimp-unsubscribe-queue',
+    'passive' => FALSE,
+    'durable' => TRUE,
+    'exclusive' => FALSE,
+    'auto_delete' => FALSE,
+  ),
 );
 
-// Name the direct exchange the channel will connect to
-$exchangeName = 'direct_mailchimp_webhooks';
-
-// Set the binding key
-$bindingKey = 'mailchimp-unsubscribe';
-
-// Channel
-$channel = $connection->channel();
-
-// Setup the queue
-$queueName = 'mailchimp-unsubscribe-queue';
-$channel->queue_declare(
-  $queueName,
-  false,
-  true,
-  false,
-  false
-);
-
-// Setup the exchange
-$channel->exchange_declare(
-  $exchangeName,  // exchange name
-  'direct',       // exchange type
-  false,          // passive
-  true,           // durable
-  false           // auto_delete
-);
-
-// Bind the queue to the exchange
-$channel->queue_bind($queueName, $exchangeName, $bindingKey);
+$mb = new MessageBroker($credentials, $config);
 
 // Create callback to handle messages received by this consumer
 $callback = function($payload) {
@@ -97,24 +92,7 @@ $callback = function($payload) {
   }
 };
 
-// Start the queue consumer
-$channel->basic_consume(
-  $queueName, // Queue name
-  '',         // Consumer tag
-  false,      // no_local
-  false,      // no_ack
-  false,      // exclusive
-  false,      // nowait
-  $callback   // callback
-);
-
-// Wait for messages on the channel
-echo ' [*] Waiting for Unsubscribe messages. To exit press CTRL+C', "\n";
-while (count($channel->callbacks)) {
-  $channel->wait();
-}
-
-$channel->close();
-$connection->close();
+// Start consuming messages
+$mb->consumeMessage($callback);
 
 ?>

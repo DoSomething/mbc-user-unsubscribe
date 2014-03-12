@@ -1,6 +1,7 @@
 {
   "require": {
     "videlalvaro/php-amqplib": "v2.1.0",
-    "sergeytsalkov/meekrodb": "*"
+    "sergeytsalkov/meekrodb": "*",
+    "dosomething/messagebroker-phplib": ">=0.1.10"
   }
 }
