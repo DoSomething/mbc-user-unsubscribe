@@ -3,6 +3,11 @@
 require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPConnection;
 
+// Load configuration settings common to the Message Broker system.
+// Symlinks in the project directory point to the actual location of the files.
+require('mb-secure-config.inc');
+require('mb-config.inc');
+
 // Pull RabbitMQ credentials from environment vars. Otherwise, default to local settings.
 $credentials = array();
 $credentials['host'] = getenv('RABBITMQ_HOST') ? getenv('RABBITMQ_HOST') : 'localhost';
@@ -12,7 +17,7 @@ $credentials['password'] = getenv('RABBITMQ_PASSWORD') ? getenv('RABBITMQ_PASSWO
 
 $config = array(
   // Routing key
-  'routingKey' => 'mailchimp-unsubscribe',
+  'routingKey' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_ROUTING_KEY'),
 
   // Consume options
   'consume' => array(
@@ -25,20 +30,20 @@ $config = array(
 
   // Exchange options
   'exchange' => array(
-    'name' => 'direct-mailchimp-webhooks',
-    'type' => 'direct',
-    'passive' => FALSE,
-    'durable' => TRUE,
-    'auto_delete' => FALSE,
+    'name' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_EXCHANGE'),
+    'type' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_EXCHANGE_TYPE'),
+    'passive' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_EXCHANGE_PASSIVE'),
+    'durable' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_EXCHANGE_DURABLE'),
+    'auto_delete' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_EXCHANGE_AUTO_DELETE'),
   ),
 
   // Queue options
   'queue' => array(
-    'name' => 'mailchimp-unsubscribe-queue',
-    'passive' => FALSE,
-    'durable' => TRUE,
-    'exclusive' => FALSE,
-    'auto_delete' => FALSE,
+    'name' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE'),
+    'passive' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_PASSIVE'),
+    'durable' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_DURABLE'),
+    'exclusive' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_EXCLUSIVE'),
+    'auto_delete' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_AUTO_DELETE'),
   ),
 );
 
