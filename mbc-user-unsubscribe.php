@@ -5,6 +5,7 @@ use PhpAmqpLib\Connection\AMQPConnection;
 
 // Load configuration settings common to the Message Broker system.
 // Symlinks in the project directory point to the actual location of the files.
+require('mb-secure-config.inc');
 require('mb-config.inc');
 
 // Pull RabbitMQ credentials from environment vars. Otherwise, default to local settings.
