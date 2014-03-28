@@ -50,7 +50,13 @@ $config = array(
   ),
 );
 
-$mb = new MessageBroker($credentials, $config);
+try {
+  $mb = new MessageBroker($credentials, $config);
+}
+catch (Exception $e) {
+  echo "Unable to establish a connection with the Message Broker. Exiting...\n";
+  exit;
+}
 
 // Create callback to handle messages received by this consumer
 $callback = function($payload) {
@@ -65,14 +71,8 @@ $callback = function($payload) {
       $lastName = $unserializedData['data']['merges']['LNAME'];
       $bday = $unserializedData['data']['merges']['BDAYFULL'];
 
-      // Create connection to the database using MeekroDB static methods
-      DB::$dbName = getenv('MAILCHIMP_USERS_DB_NAME') ? getenv('MAILCHIMP_USERS_DB_NAME') : 'mailchimp_users';
-      DB::$user = getenv('MAILCHIMP_USERS_DB_USER') ? getenv('MAILCHIMP_USERS_DB_USER') : 'root';
-      DB::$password = getenv('MAILCHIMP_USERS_DB_PW') ? getenv('MAILCHIMP_USERS_DB_PW') : 'root';
-      DB::$host = getenv('MAILCHIMP_USERS_DB_HOST') ? getenv('MAILCHIMP_USERS_DB_HOST') : 'localhost';
-      DB::$port = getenv('MAILCHIMP_USERS_DB_PORT') ? getenv('MAILCHIMP_USERS_DB_PORT') : 8901;
-
       $updateArgs = array();
+      $updateArgs['email'] = $email;
       $updateArgs['subscribed'] = 0;
 
       if (!empty($uid)) {
@@ -88,8 +88,19 @@ $callback = function($payload) {
         $updateArgs['bday'] = $bday;
       }
 
-      // Update the 'users' table to indicate a user is unsubscribed
-      $result = DB::update('users', $updateArgs, "email=%s", $email);
+      // POST subscription update to the user API
+      $userApiHost = getenv('DS_USER_API_HOST') ? getenv('DS_USER_API_HOST') : 'localhost';
+      $userApiPort = getenv('DS_USER_API_PORT') ? getenv('DS_USER_API_PORT') : 4722;
+      $userApiUrl = $userApiHost . ':' . $userApiPort . '/user';
+
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, $userApiUrl);
+      curl_setopt($ch, CURLOPT_POST, count($updateArgs));
+      curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($updateArgs));
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      $result = curl_exec($ch);
+      curl_close($ch);
+
       if ($result == TRUE) {
         echo "Updated subscription for email: $email\n";
       }
