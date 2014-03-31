@@ -14,6 +14,7 @@ $credentials['host'] = getenv('RABBITMQ_HOST') ? getenv('RABBITMQ_HOST') : 'loca
 $credentials['port'] = getenv('RABBITMQ_PORT') ? getenv('RABBITMQ_PORT') : '5672';
 $credentials['username'] = getenv('RABBITMQ_USERNAME') ? getenv('RABBITMQ_USERNAME') : 'guest';
 $credentials['password'] = getenv('RABBITMQ_PASSWORD') ? getenv('RABBITMQ_PASSWORD') : 'guest';
+$credentials['vhost'] = getenv('RABBITMQ_VHOST') ? getenv('RABBITMQ_VHOST') : '';
 
 $config = array(
   // Routing key
@@ -103,6 +104,9 @@ $callback = function($payload) {
 
       if ($result == TRUE) {
         echo "Updated subscription for email: $email\n";
+      }
+      else {
+        echo "FAILED to update subscription for emai: $email\n";
       }
 
       // Send acknowledgement
