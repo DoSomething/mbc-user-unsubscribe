@@ -14,5 +14,5 @@ Likely being used in conjunction with: https://github.com/DoSomething/mbp-mailch
 
 #### Start the Consumer
 - Install dependencies: `composer install`
-- If applicable, set the environment variable `MB_USER_API_PORT` to specify the port you want the server to run on.
+- If applicable, set the environment variable `DS_USER_API_HOST` and `DS_USER_API_PORT` to specify where the user API is.
 - Run the consumer: `php mbc-user-unsubscribe.php`
