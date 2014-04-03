@@ -46,7 +46,7 @@ $config = array(
       'durable' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_DURABLE'),
       'exclusive' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_EXCLUSIVE'),
       'auto_delete' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_AUTO_DELETE'),
-      'bindingKey' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_ROUTING_KEY'),
+      'bindingKey' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_BINDING_KEY'),
     ),
   ),
 );
