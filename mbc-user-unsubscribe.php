@@ -104,13 +104,13 @@ $callback = function($payload) {
 
       if ($result == TRUE) {
         echo "Updated subscription for email: $email\n";
+
+        // Send acknowledgement only when subscription update succeeds.
+        MessageBroker::sendAck($payload);
       }
       else {
         echo "FAILED to update subscription for emai: $email\n";
       }
-
-      // Send acknowledgement
-      $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
     }
   }
 };
