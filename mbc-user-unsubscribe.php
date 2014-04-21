@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPConnection;
+use DoSomething\MBStatTracker\StatHat;
 
 // Load configuration settings common to the Message Broker system.
 // Symlinks in the project directory point to the actual location of the files.
@@ -40,7 +41,7 @@ $config = array(
 
   // Queue options
   'queue' => array(
-    'mailchimp-webhook' => array(
+    array(
       'name' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE'),
       'passive' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_PASSIVE'),
       'durable' => getenv('MB_MAILCHIMP_UNSUBSCRIBE_QUEUE_DURABLE'),
@@ -61,6 +62,10 @@ catch (Exception $e) {
 
 // Create callback to handle messages received by this consumer
 $callback = function($payload) {
+  // StatHat tracking setup.
+  $statHat = new StatHat(getenv('STATHAT_EZKEY'), 'mbc-user-unsubscribe:');
+  $statHat->setIsProduction(getenv('USE_STAT_TRACKING') ? getenv('USE_STAT_TRACKING') : FALSE);
+
   if (isset($payload->body)) {
     $unserializedData = unserialize($payload->body);
 
@@ -107,12 +112,25 @@ $callback = function($payload) {
 
         // Send acknowledgement only when subscription update succeeds.
         MessageBroker::sendAck($payload);
+
+        $statHat->addStatName('success');
       }
       else {
         echo "FAILED to update subscription for emai: $email\n";
+
+        $statHat->addStatName('update failed');
       }
     }
+    else {
+      $statHat->addStatName('missing expected data from webhook payload');
+    }
   }
+  else {
+    $statHat->addStatName('missing payload body');
+  }
+
+  // Report to StatHat.
+  $statHat->reportCount(1);
 };
 
 // Start consuming messages
