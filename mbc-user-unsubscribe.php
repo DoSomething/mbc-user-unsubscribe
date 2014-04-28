@@ -129,7 +129,7 @@ $callback = function($payload) {
     $statHat->addStatName('missing payload body');
   }
 
-  // Report to StatHat.
+  // Report to StatHat. Only report a single instance of the event.
   $statHat->reportCount(1);
 };
 
