@@ -16,3 +16,7 @@ Likely being used in conjunction with: https://github.com/DoSomething/mbp-mailch
 - Install dependencies: `composer install`
 - If applicable, set the environment variable `DS_USER_API_HOST` and `DS_USER_API_PORT` to specify where the user API is.
 - Run the consumer: `php mbc-user-unsubscribe.php`
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/DoSomething/mbc-user-unsubscribe/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
